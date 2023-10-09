@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\User\ProfileUserController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -24,4 +25,8 @@ Route::group(['middleware' => 'api'], function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::post('/refrescar', [AuthController::class, 'refresh'])->name('refresh');
     Route::post('/perfil', [AuthController::class, 'profile'])->name('profile');
+});
+
+Route::group(['prefix' => 'user'], function($router){
+    Route::post('/profile-user', [ProfileUserController::class, 'profile_user']);
 });
