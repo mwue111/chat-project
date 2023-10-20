@@ -7,6 +7,7 @@ use Validator;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Resources\User\ProfileUserGeneralResource;
 
 class AuthController extends Controller
 {
@@ -73,11 +74,12 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth('api')->factory()->getTTL() * 60,
-            'user' => [
-                'name' => auth('api')->user()->name,
-                'surname' => auth('api')->user()->surname,
-                'email' => auth('api')->user()->email,
-            ]
+            'user' => ProfileUserGeneralResource::make(auth('api')->user()),    //uso del resource en lugar de hacer el array a mano
+            // 'user' => [
+            //     'name' => auth('api')->user()->name,
+            //     'surname' => auth('api')->user()->surname,
+            //     'email' => auth('api')->user()->email,
+            // ]
         ]);
     }
 }

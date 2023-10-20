@@ -27,6 +27,11 @@ class User extends Authenticatable implements JWTSubject
         'phone',
         'password',
         'address',
+        'avatar',
+        'fb',
+        'tw',
+        'ig',
+        'lnkdn',
     ];
 
     /**
@@ -68,4 +73,30 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
+
+    //mutator: para evitar hacer validación de la contraseña en el controlador
+    public function setPasswordAttribute($password){
+        if($password){
+            // dd($password);
+            $this->attributes['password'] = bcrypt($password);
+        }
+    }
+
+    /*
+    //relaciones
+
+    //con chat rooms
+    public function ChatRoomFirst() {
+        return $this->hasMany(ChatRoom::class, 'first_user');
+    }
+
+    public function ChatRoomSecond() {
+        return $this->hasMany(ChatRoom::class, 'second_user');
+    }
+
+    //con chat
+    public function Chat() {
+        return $this->hasMany(Chat::class, 'user_id')
+    }
+    */
 }

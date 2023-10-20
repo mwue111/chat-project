@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Chat\ChatController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -28,5 +29,12 @@ Route::group(['middleware' => 'api'], function () {
 });
 
 Route::group(['prefix' => 'user'], function($router){
-    Route::post('/profile-user', [ProfileUserController::class, 'profile_user']);
+    Route::post('/profile-user', [ProfileUserController::class, 'profileUser']);
+    Route::get('/contact-users', [ProfileUserController::class, 'contactUsers']);
+});
+
+Route::group(['prefix'=> 'chat'], function($router){
+    Route::post('/start-chat', [ChatController::class,'startChat']);
+    Route::post('/list-my-chat-room', [ChatController::class,'listMyChats']);
+    Route::post('/send-message-text', [ChatController::class,'sendMessageText']);
 });
