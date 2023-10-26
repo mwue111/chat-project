@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('chats', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained();
-            $table->foreignId('chat_room_id')->constrained()->nullable();
-            $table->foreignId('chat_group_id')->constrained()->nullable();
+            $table->foreignId('chat_room_id')->nullable()->constrained();
+            $table->foreignId('chat_group_id')->nullable()->constrained();
             $table->longText('message')->nullable();
-            $table->foreignId('chat_file_id')->constrained()->nullable();
+            $table->foreignId('chat_file_id')->nullable()->constrained();
             $table->dateTime('read_at')->nullable();
             $table->timestamps();
             $table->softDeletes();

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Chat;
 
+use App\Events\SendMessageChat;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -43,8 +44,8 @@ class ChatController extends Controller
                 ->update(['read_at' => now()]);
 
             $chats = Chat::where('chat_room_id', $chatRoom->id)
-                        ->orderBy('created_at', 'desc')
-                        ->paginate(10);
+                        ->orderBy('created_at', 'asc') //'desc'
+                        ->paginate(10); //10
 
             $data = [];
             $data['room_id'] = $chatRoom->id;
@@ -53,7 +54,8 @@ class ChatController extends Controller
             $data['user'] = [
                 'id' => $to_user->id,
                 'full_name' => $to_user->name . ' ' . $to_user->surname,
-                'avatar' => $to_user->avatar ? env('APP_URL') . 'storage/' . $to_user->avatar : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+                'avatar' => $to_user->avatar ? env('APP_URL') . 'storage/' . $to_user->avatar : null,
+                // 'avatar' => $to_user->avatar ? env('APP_URL') . 'storage/' . $to_user->avatar : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
             ];
 
             if(count($chats) > 0){
@@ -65,7 +67,7 @@ class ChatController extends Controller
                         'sender' => [
                             'id' => $chat->FromUser->id,
                             'full_name' => $chat->FromUser->name . ' ' . $chat->FromUser->surname,
-                            'avatar' => $chat->FromUser->avatar ? env('APP_URL' . 'storage/' . $chat->FromUser->avatar) : null,
+                            'avatar' => $chat->FromUser->avatar ? env('APP_URL') . 'storage/' . $chat->FromUser->avatar : null,
                         ],
                         'message' => $chat->message,
                         // 'file' => $chat->file,
@@ -101,7 +103,8 @@ class ChatController extends Controller
             $data['user'] = [
                 'id' => $to_user->id,
                 'full_name' => $to_user->name . ' ' . $to_user->surname,
-                'avatar' => $to_user->avatar ? env('APP_URL') . 'storage/' . $to_user->avatar : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+                'avatar' => $to_user->avatar ? env('APP_URL') . 'storage/' . $to_user->avatar : null,
+                // 'avatar' => $to_user->avatar ? env('APP_URL') . 'storage/' . $to_user->avatar : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
             ];
             $data['messages'] = [];
             $data['exist'] = 0;
@@ -122,12 +125,16 @@ class ChatController extends Controller
         $chat->ChatRoom->update(['last_at' => now()->format("Y-m-d H:i:s.u")]);
 
         //generar evento para notificar al receptor del mensaje
+        broadcast(new SendMessageChat($chat));
+
         //hacer push del mensaje recibido
             //SendMessageChat
         //notificar al panel lateral que contiene todos los chats
             //RefreshMyChatRoom
         //notificar al panel lateral que contiene todos los chats en las vistas del receptor
             //RefreshMyChatRoom
+
+        return response()->json(['message' => 200]);
     }
 
     //listar todos los chats (barra lateral)

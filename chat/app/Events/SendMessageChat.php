@@ -29,7 +29,7 @@ class SendMessageChat implements ShouldBroadcastNow
             'sender' => [
                 'id' =>  $this->chat->FromUser->id,
                 'full_name' =>  $this->chat->FromUser->name . ' ' .  $this->chat->FromUser->surname,
-                'avatar' =>  $this->chat->FromUser->avatar ? env('APP_URL' . 'storage/' .  $this->chat->FromUser->avatar) : null,
+                'avatar' =>  $this->chat->FromUser->avatar ? env('APP_URL') . 'storage/' .  $this->chat->FromUser->avatar : null,
             ],
             'message' =>  $this->chat->message,
             // 'file' =>  $this->chat->file,
