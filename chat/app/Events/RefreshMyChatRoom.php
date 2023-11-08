@@ -35,7 +35,45 @@ class RefreshMyChatRoom implements ShouldBroadcastNow
 
         return [
             'chatrooms' => $chatrooms->map(function($item) {
-                return ChatGResource::make($item);
+                date_default_timezone_set("Europe/Madrid");
+                // return ChatGResource::make($item);
+                return [
+                    'friend_first' => $item->first_user != $this->to_user_id ?
+                    [
+                        'id' => $item->FirstUser->id,
+                        'full_name' => $item->FirstUser->name . ' ' . $item->FirstUser->surname,
+                        'avatar' =>  $item->FirstUser->avatar ? env('APP_URL') . 'storage/' . $item->FirstUser->avatar : null,
+                    ] : null,
+
+                    'friend_second' => $item->second_user ?
+                    $item->second_user != $this->to_user_id ?
+                        [
+                            'id' => $item->SecondUser->id,
+                            'full_name' => $item->SecondUser->name . ' ' . $item->SecondUser->surname,
+                            'avatar' => $item->SecondUser->avatar ? env('APP_URL') . 'storage/' . $item->SecondUser->avatar : null,
+                        ] : null
+                    : null,
+                    'group_chat' => $item->chat_group_id ?
+                        [
+                            'id' => $item->ChatGroup->id,
+                            'name' => $item->ChatGroup->name,
+                            'avatar' => null,
+
+                            'last_message' => $item->ChatGroup->last_message,
+                            'last_message_is_mine' => $item->ChatGroup->last_message_user ?
+                                    $item->ChatGroup->last_message_user === $this->to_user_id
+                                : null,
+                            'last_time' => $item->ChatGroup->last_time_created_at,
+                            'count_message' => $item->ChatGroup->getCountMessages($this->to_user_id),
+
+                        ] : null,
+                    'uniqid' => $item->uniqid,
+                    'is_active' => false,
+                    'last_message' => $item->last_message,
+                    'last_message_is_mine' => $item->last_message_user ? $item->last_message_user === $this->to_user_id : null,
+                    'last_time' => $item->last_time_created_at,
+                    'count_message' => $item->getCountMessages($this->to_user_id),
+                ];
             })
         ];
     }

@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Chat;
 
+use App\Events\RefreshMyChatRoom;
 use App\Events\SendMessageChat;
 use App\Http\Controllers\Controller;
+use App\Models\Chat\ChatFile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\Chat\ChatRoom;
 use App\Models\Chat\Chat;
 use App\Http\Resources\Chat\ChatGResource;
+use Illuminate\Support\Facades\Storage;
 
 class ChatController extends Controller
 {
@@ -20,6 +23,7 @@ class ChatController extends Controller
     public function startChat(Request $request) {
 
         date_default_timezone_set("Europe/Madrid");
+
         //comprobar que la conversación es con otro usuario o con uno mismo
         if($request->to_user_id == auth('api')->user()->id){
             return response()->json(['error' => 'No puedes iniciar un chat contigo mismo.']);
@@ -38,7 +42,8 @@ class ChatController extends Controller
                                 ->whereIn('second_user', [$request->to_user_id, auth('api')->user()->id])
                                 ->first();
 
-            Chat::where('user_id', $request->to_user_id)    //en chats el user_id siempre es el destinatario
+            //actualiza el campo leído para el que recibe el mensaje
+            Chat::where('user_id', $request->to_user_id)
                 ->where('chat_room_id', $chatRoom->id)
                 ->where('read_at', null)
                 ->update(['read_at' => now()]);
@@ -70,7 +75,16 @@ class ChatController extends Controller
                             'avatar' => $chat->FromUser->avatar ? env('APP_URL') . 'storage/' . $chat->FromUser->avatar : null,
                         ],
                         'message' => $chat->message,
-                        // 'file' => $chat->file,
+                        'file' =>  $chat->ChatFile ? [    //función ChatFile del modelo chat
+                            'id' => $chat->ChatFile->id,
+                            'file_name' => $chat->ChatFile->file_name,
+                            'type' => $chat->ChatFile->type,
+                            'resolution' => $chat->ChatFile->resolution,
+                            'size' => $chat->ChatFile->size,
+                            'uniqid' => $chat->ChatFile->uniqid,
+                            'file' => env('APP_URL') . 'storage/' . $chat->ChatFile->file,
+                            'created_at' => $chat->ChatFile->created_at->format('Y-m-d h:i A'),
+                        ] : null,
                         'read_at' => $chat->read_at,
                         'time' => $chat->created_at->diffForHumans(),
                         'created_at' => $chat->created_at,
@@ -118,21 +132,71 @@ class ChatController extends Controller
     public function sendMessageText(Request $request) {
         date_default_timezone_set("Europe/Madrid");
 
+        //añadir a la request el parámetro user_id para poder introducirlo en la tabla chats (mensajes)
         $request->request->add(['user_id' => auth('api')->user()->id]);
+
         $chat = Chat::create($request->all());
 
         //modificar el campo last_at en chat_rooms
         $chat->ChatRoom->update(['last_at' => now()->format("Y-m-d H:i:s.u")]);
 
         //generar evento para notificar al receptor del mensaje
-        broadcast(new SendMessageChat($chat));
-
         //hacer push del mensaje recibido
-            //SendMessageChat
-        //notificar al panel lateral que contiene todos los chats
-            //RefreshMyChatRoom
-        //notificar al panel lateral que contiene todos los chats en las vistas del receptor
-            //RefreshMyChatRoom
+        broadcast(new SendMessageChat($chat));  //envío del objeto Chat
+
+        //notificar al panel lateral que contiene todos los chats de quien recibe el mensaje
+        broadcast(new RefreshMyChatRoom($request->to_user_id));
+
+        //notificar al panel lateral que contiene todos los chats de quien envía el mensaje
+        broadcast(new RefreshMyChatRoom(auth('api')->user()->id));
+
+        return response()->json(['message' => 200]);
+    }
+
+    //función para el enví9o de archivos + mensajes
+    public function sendFileMessageText(Request $request) {
+        date_default_timezone_set('Europe/Madrid');
+
+        if($request->file('files')) {
+            foreach($request->file('files') as $file){
+                $extension = $file->getClientOriginalExtension();
+                $size = $file->getSize();
+                $name = $file->getClientOriginalName();
+                $data = [];
+
+                if(in_array(strtolower($extension), ['jpeg', 'bmp', 'jpg', 'png', 'gif'])) {
+                    $data = getimagesize($file);
+                }
+                $uniqid = uniqid();
+
+                //Almacenar el archivo en el servidor
+                $path = Storage::putFile('chats', $file);
+
+                //crear un nuevo registro en la tabla chat_files
+                $chatFile = ChatFile::create([
+                    'file_name' => $name,
+                    'resolution' => $data ? $data[0] . 'X' . $data[1] : null, //ancho x alto
+                    'type' => $extension,
+                    'size' => $size,
+                    'file' => $path,
+                    'uniqid' => $uniqid,
+                ]);
+
+                //añadir a la request el parámetro necesario para poder meter el id del archivo en la tabla chats
+                $request->request->add(['chat_file_id' => $chatFile->id]);
+                $request->request->add(['user_id' => auth('api')->user()->id]);
+
+                //crear el mensaje
+                $chat = Chat::create($request->all());
+                $chat->ChatRoom->update(['last_at' => now()->format('Y-m-d H:i:s.u')]);
+
+                //sockets:
+                broadcast(new SendMessageChat($chat));
+                broadcast(new RefreshMyChatRoom($request->to_user_id));
+                broadcast(new RefreshMyChatRoom(auth('api')->user()->id));
+
+            }
+        }
 
         return response()->json(['message' => 200]);
     }

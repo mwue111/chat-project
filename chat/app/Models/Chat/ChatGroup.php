@@ -17,12 +17,12 @@ class ChatGroup extends Model
     ];
 
     //para que las columnas de creación y actualización estén en la zona horaria española (útil para producción)
-    public function setCreatedAttribute($value) {
+    public function setCreatedAtAttribute($value) {
         date_default_timezone_set("Europe/Madrid");
         $this->attributes['created_at'] = Carbon::now();
     }
 
-    public function setUpdatedAttribute($value) {
+    public function setUpdatedAtAttribute($value) {
         date_default_timezone_set("Europe/Madrid");
         $this->attributes['updated_at'] = Carbon::now();
     }
@@ -58,7 +58,7 @@ class ChatGroup extends Model
     }
 
     //mutator que devuelve la fecha de creación del último mensaje enviado
-    public function getLastTimeCreatedAtAttribute() {
+    public function getLastTimeCreatedAtAttibute() {
         $chat = $this->Chats->sortByDesc('id')->first();
 
         return $chat ? $chat->created_at->diffForHumans() : null;

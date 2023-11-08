@@ -22,7 +22,7 @@ class SendMessageChat implements ShouldBroadcastNow
         $this->chat = $chat;
     }
 
-    //formato en el que se recibe el mensaje
+    //formato en el que se envía el mensaje al front
     public function broadcastWith() {
         return [
             'id' =>  $this->chat->id,
@@ -32,7 +32,17 @@ class SendMessageChat implements ShouldBroadcastNow
                 'avatar' =>  $this->chat->FromUser->avatar ? env('APP_URL') . 'storage/' .  $this->chat->FromUser->avatar : null,
             ],
             'message' =>  $this->chat->message,
-            // 'file' =>  $this->chat->file,
+            // 'message' =>  $this->chat->message ? $this->chat->message : null,
+            'file' =>  $this->chat->ChatFile ? [    //función ChatFile del modelo chat
+                'id' => $this->chat->ChatFile->id,
+                'file_name' => $this->chat->ChatFile->file_name,
+                'type' => $this->chat->ChatFile->type,
+                'resolution' => $this->chat->ChatFile->resolution,
+                'size' => $this->chat->ChatFile->size,
+                'uniqid' => $this->chat->ChatFile->uniqid,
+                'file' => env('APP_URL') . 'storage/' . $this->chat->ChatFile->file,
+                'created_at' => $this->chat->ChatFile->created_at->format('Y-m-d h:i A'),
+            ] : null,
             'read_at' =>  $this->chat->read_at,
             'time' =>  $this->chat->created_at->diffForHumans(),
             'created_at' =>  $this->chat->created_at,

@@ -14,6 +14,7 @@ class ChatGResource extends JsonResource
      */
     public function toArray(Request $request)
     {
+        date_default_timezone_set("Europe/Madrid");
         return [
             //Estamos en la tabla chat_rooms. Si el usuario autenticado NO es first_user, devuélveme los datos. Si lo es, devuelve null (porque no se necesitan los datos del usuario autenticado, se necesitan los datos del otro usuario/grupo).
             'friend_first' => $this->resource->first_user != auth('api')->user()->id ?
@@ -38,8 +39,8 @@ class ChatGResource extends JsonResource
                     'avatar' => null,   //se pondrá un placeholder
 
                     'last_message' => $this->resource->ChatGroup->last_message,
-                    'last_message_is_mine' => $this->resource->ChatGroup->last_user_message ?
-                            $this->resource->ChatGroup->last_user_message === auth('api')->user()->id
+                    'last_message_is_mine' => $this->resource->ChatGroup->last_message_user ?
+                            $this->resource->ChatGroup->last_message_user === auth('api')->user()->id
                         : null,
                     'last_time' => $this->resource->ChatGroup->last_time_created_at,
                     'count_message' => $this->resource->ChatGroup->getCountMessages(auth('api')->user()->id),
@@ -48,8 +49,9 @@ class ChatGResource extends JsonResource
             'uniqid' => $this->resource->uniqid,
             'is_active' => false,
             'last_message' => $this->resource->last_message, //$this->resource->Chats->sortByDesc('id')->first() o llamada al mutator getLastMessageAttribute en el modelo como last_message.
-            'last_message_is_mine' => $this->resource->last_user_message ? $this->resource->last_user_message === auth('api')->user()->id : null,
+            'last_message_is_mine' => $this->resource->last_message_user ? $this->resource->last_message_user === auth('api')->user()->id : null,
             'last_time' => $this->resource->last_time_created_at,
+            // 'last_time' => $this->resource->last_time_created_at ? $this->resource->last_time_created_at : null,
             'count_message' => $this->resource->getCountMessages(auth('api')->user()->id),
         ];
     }

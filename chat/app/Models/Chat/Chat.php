@@ -22,12 +22,12 @@ class Chat extends Model
     ];
 
     //mutators para que las columnas de creación y actualización estén en la zona horaria española (útil para producción)
-    public function setCreatedAttribute($value) {
+    public function setCreatedAtAttribute($value) {
         date_default_timezone_set("Europe/Madrid");
         $this->attributes['created_at'] = Carbon::now();
     }
 
-    public function setUpdatedAttribute($value) {
+    public function setUpdatedAtAttribute($value) {
         date_default_timezone_set("Europe/Madrid");
         $this->attributes['updated_at'] = Carbon::now();
     }

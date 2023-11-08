@@ -37,4 +37,5 @@ Route::group(['prefix'=> 'chat'], function($router){
     Route::post('/start-chat', [ChatController::class,'startChat']);
     Route::post('/list-my-chat-room', [ChatController::class,'listMyChats']);
     Route::post('/send-message-text', [ChatController::class,'sendMessageText']);
+    Route::post('/send-message-text-and-files', [ChatController::class,'sendFileMessageText']);
 });
